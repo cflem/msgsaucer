@@ -24,7 +24,7 @@ void error (char* msg) {
   exit(1);
 }
 
-void appendToList (char* ip, char* msg) {
+void appendToList (char* ip, char* msg, int n) {
   struct link* use = root;
   if (use == 0) {
     root = malloc(sizeof(struct link));
@@ -34,8 +34,9 @@ void appendToList (char* ip, char* msg) {
     use->next = malloc(sizeof(struct link));
     use = use->next;
   }
-  use->ip = ip;
-  use->msg = msg;
+  use->ip = strdup(ip);
+  use->msg = malloc(n);
+  memcpy(use->msg, msg, n);
   use->next = 0;
 }
 
@@ -43,6 +44,8 @@ void freeList () {
   while (root != 0) {
     struct link* old = root;
     root = root->next;
+    free(old->ip);
+    free(old->msg);
     free(old);
   }
 }
@@ -60,17 +63,17 @@ void print_msg (char* ip, char* msg) {
 
   FILE* fp = fopen("/dev/pts/1", "w");
   if (fp < 0) error("Error opening terminal for writing.");
-  fprintf(fp, "\n*** MSGSaucer ***\n<%s [%s]> %s\n*** Done ***\n", nick, ip, body);
+  fprintf(fp, "\n\x1b[96;1m<%s [%s]>\x1b[39;0m %s\n", nick, ip, body);
   fclose(fp);
 }
 
 
 
-void process_msg (char* ip, char* msg) {
+void process_msg (char* ip, char* msg, int n) {
   if (access("/dev/pts/1", F_OK) != -1)
     print_msg(ip, msg);
   else
-    appendToList(ip, msg);
+    appendToList(ip, msg, n);
 }
 
 void* pestering (void* args) {
@@ -81,6 +84,8 @@ void* pestering (void* args) {
         print_msg(root->ip, root->msg);
         tmp = root;
         root = root->next;
+        free(tmp->ip);
+        free(tmp->msg);
         free(tmp);
       }
     }
@@ -88,15 +93,13 @@ void* pestering (void* args) {
 }
 
 int main () {
-  pthread_t tid;
-  pthread_create(&tid, NULL, pestering, NULL);
-
   int sockfd;
   int clilen;
   struct sockaddr_in srv_addr;
   struct sockaddr_in cli_addr;
   struct hostent* hostp;
   int reusefast = 1;
+  int n;
 
   sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sockfd < 0) error("Failed to open socket.");
@@ -108,18 +111,22 @@ int main () {
   if (bind(sockfd, (struct sockaddr*)&srv_addr, sizeof(srv_addr)) < 0)
     error("Could not bind socket.");
   printf("Listener start/running.\n");
+
   daemon(0, 0);
+  pthread_t tid;
+  pthread_create(&tid, NULL, pestering, NULL);
+
   clilen = sizeof(cli_addr);
   char buffer[BUFSIZE];
   while (1) {
     memset(buffer, 0, BUFSIZE);
-    if (recvfrom(sockfd, buffer, BUFSIZE, 0, (struct sockaddr*)&cli_addr, &clilen) < 0)
+    if ((n = recvfrom(sockfd, buffer, BUFSIZE, 0, (struct sockaddr*)&cli_addr, &clilen)) < 0)
       error("Could not read data.");
     char ip[16];
     ip[15] = 0;
     if (inet_ntop(AF_INET, (const void*)&cli_addr.sin_addr, ip, 16) < 0)
       error("Could not read client address.");
-    process_msg(ip, buffer);
+    process_msg(ip, buffer, n);
   }
   pthread_join(tid, NULL);
   freeList();

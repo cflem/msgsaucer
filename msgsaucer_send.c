@@ -17,7 +17,7 @@ void error (char* msg) {
 
 int main (int argc, char** argv) {
   if (argc < 3) {
-    printf("Usage: %s <destination> <message>\n", argv[0]);
+    printf("Usage: %s <destination>[:port] <message>\n", argv[0]);
     exit(1);
   }
 
@@ -48,7 +48,6 @@ int main (int argc, char** argv) {
     nicklen = 3;
     strcpy(nickbuff, "bob");
   }
-  printf("Sending as %s\n", nickbuff);
  
   char buffer[msglen+nicklen+9];
   *((int*)buffer) = htonl(nicklen);
@@ -57,12 +56,18 @@ int main (int argc, char** argv) {
   strncpy(&buffer[nicklen+8], msg, msglen);
   buffer[msglen+nicklen+8] = 0;
 
+  char* colon = strchr(argv[1], ':');
+  int portno = PORTNO;
+  if (colon != 0) {
+    colon[0] = 0;
+    portno = atoi(&colon[1]);
+  }
   struct hostent* dest = gethostbyname(argv[1]);
   if (dest == 0) error("Could not reach destionation.");
   struct sockaddr_in dest_addr;
   dest_addr.sin_family = AF_INET;
   memcpy(&dest_addr.sin_addr.s_addr, dest->h_addr, dest->h_length);
-  dest_addr.sin_port = htons(PORTNO);
+  dest_addr.sin_port = htons(portno);
   
   int fd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sendto(fd, buffer, msglen+nicklen+8, 0, (struct sockaddr*)&dest_addr, sizeof(dest_addr)) < 0) error("Message could not be delivered.");
