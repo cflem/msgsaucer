@@ -11,13 +11,13 @@
 #include <pwd.h>
 
 void error (char* msg) {
-  printf("Error: %s\n", msg);
+  fprintf(stderr, "[sauce] Error: %s\n", msg);
   exit(1);
 }
 
 int main (int argc, char** argv) {
   if (argc < 3) {
-    printf("Usage: %s <destination>[:port] <message>\n", argv[0]);
+    printf("[sauce] Usage: %s <destination>[:port] <message>\n", argv[0]);
     exit(1);
   }
 
@@ -32,9 +32,9 @@ int main (int argc, char** argv) {
     if (i < argc-1) strcat(msg, " ");
   }
   struct passwd* pw = getpwuid(getuid());
-  char nickfile[strlen(pw->pw_dir)+10];
+  char nickfile[strlen(pw->pw_dir)+11];
   strcpy(nickfile, pw->pw_dir);
-  strcat(nickfile, "/.msgnick");
+  strcat(nickfile, "/.nickname");
   FILE* nickfp = fopen(nickfile, "r");
   char nickbuff[NICK_MAX_SIZE];
   int nicklen;

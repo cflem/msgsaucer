@@ -20,7 +20,7 @@ struct link {
 struct link* root = 0;
 
 void error (char* msg) {
-  printf("%s\n", msg);
+  fprintf(stderr, "[saucer] %s\n", msg);
   exit(1);
 }
 
@@ -63,7 +63,7 @@ void print_msg (char* ip, char* msg) {
 
   FILE* fp = fopen("/dev/pts/0", "w");
   if (fp < 0) error("Error opening terminal for writing.");
-  fprintf(fp, "\n\x1b[96;1m<%s [%s]>\x1b[39;0m %s\n", nick, ip, body);
+  fprintf(fp, "\n\x1b[96;1m[sauced] <%s (%s)>\x1b[39;0m %s\n", nick, ip, body);
   fclose(fp);
 }
 
@@ -110,7 +110,7 @@ int main () {
   srv_addr.sin_port = htons(PORTNO);
   if (bind(sockfd, (struct sockaddr*)&srv_addr, sizeof(srv_addr)) < 0)
     error("Could not bind socket.");
-  printf("Listener start/running.\n");
+  printf("[saucer] Listener start/running.\n");
 
   daemon(0, 0);
   pthread_t tid;

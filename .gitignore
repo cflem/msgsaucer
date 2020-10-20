@@ -21,6 +21,8 @@
 *.dylib
 
 # Executables
+saucer
+sauce
 *.exe
 *.out
 *.app

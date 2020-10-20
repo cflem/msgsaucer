@@ -1,5 +1,5 @@
 all:
-	gcc msgsaucer.c -lpthread -o messenger.out
-	gcc msgsaucer_send.c -o sauce.out
+	gcc saucer.c -lpthread -o saucer
+	gcc sauce.c -o sauce
 clean:
-	rm *.out
+	rm *.out saucer sauce
