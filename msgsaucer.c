@@ -61,7 +61,7 @@ void print_msg (char* ip, char* msg) {
   char body[bodylen+1];
   strncpy(body, &msg[nicklen+8], bodylen);
 
-  FILE* fp = fopen("/dev/pts/1", "w");
+  FILE* fp = fopen("/dev/pts/0", "w");
   if (fp < 0) error("Error opening terminal for writing.");
   fprintf(fp, "\n\x1b[96;1m<%s [%s]>\x1b[39;0m %s\n", nick, ip, body);
   fclose(fp);
@@ -70,7 +70,7 @@ void print_msg (char* ip, char* msg) {
 
 
 void process_msg (char* ip, char* msg, int n) {
-  if (access("/dev/pts/1", F_OK) != -1)
+  if (access("/dev/pts/0", F_OK) != -1)
     print_msg(ip, msg);
   else
     appendToList(ip, msg, n);
@@ -78,7 +78,7 @@ void process_msg (char* ip, char* msg, int n) {
 
 void* pestering (void* args) {
   while (1) {
-    if (access("/dev/pts/1", F_OK) != -1) {
+    if (access("/dev/pts/0", F_OK) != -1) {
       struct link* tmp;
       while (root != 0) {
         print_msg(root->ip, root->msg);
